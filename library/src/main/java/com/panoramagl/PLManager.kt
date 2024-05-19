@@ -2,10 +2,12 @@ package com.panoramagl
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.hardware.display.DisplayManager
 import android.opengl.GLSurfaceView
 import android.os.Handler
 import android.os.Looper
@@ -1476,28 +1478,30 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
                 }
                 accelerometer(event, mTempAcceleration!!.setValues(values))
             }
-//            Sensor.TYPE_ORIENTATION -> {
-//                val display = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
-//                var newOrientation = mCurrentDeviceOrientation
-//                when (context.resources.configuration.orientation) {
-//                    Configuration.ORIENTATION_PORTRAIT -> when (display.orientation) {
-//                        Surface.ROTATION_0, Surface.ROTATION_90 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationPortrait
-//                        Surface.ROTATION_180, Surface.ROTATION_270 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown
-//                    }
-//                    Configuration.ORIENTATION_LANDSCAPE -> when (display.orientation) {
-//                        Surface.ROTATION_0, Surface.ROTATION_90 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationLandscapeLeft
-//                        Surface.ROTATION_180, Surface.ROTATION_270 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationLandscapeRight
-//                    }
-//                    else -> Unit
-//                }
-//                if (mCurrentDeviceOrientation != newOrientation) {
-//                    if (mIsValidForSensorialRotation && sensorialRotationType == PLSensorialRotationType.PLSensorialRotationTypeGyroscope) updateGyroscopeRotationByOrientation(
-//                        mCurrentDeviceOrientation,
-//                        newOrientation
-//                    )
-//                    mCurrentDeviceOrientation = newOrientation
-//                }
-//            }
+            Sensor.TYPE_ORIENTATION -> {
+                val display = (context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)?.getDisplay(Display.DEFAULT_DISPLAY)
+                var newOrientation = mCurrentDeviceOrientation
+                when (context.resources.configuration.orientation) {
+                    Configuration.ORIENTATION_PORTRAIT -> when (display?.rotation) {
+                        Surface.ROTATION_0, Surface.ROTATION_90 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationPortrait
+                        Surface.ROTATION_180, Surface.ROTATION_270 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown
+                    }
+
+
+                    Configuration.ORIENTATION_LANDSCAPE -> when (display?.rotation) {
+                        Surface.ROTATION_0, Surface.ROTATION_90 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationLandscapeLeft
+                        Surface.ROTATION_180, Surface.ROTATION_270 -> newOrientation = UIDeviceOrientation.UIDeviceOrientationLandscapeRight
+                    }
+                    else -> Unit
+                }
+                if (mCurrentDeviceOrientation != newOrientation) {
+                    if (mIsValidForSensorialRotation && sensorialRotationType == PLSensorialRotationType.PLSensorialRotationTypeGyroscope) updateGyroscopeRotationByOrientation(
+                        mCurrentDeviceOrientation,
+                        newOrientation
+                    )
+                    mCurrentDeviceOrientation = newOrientation
+                }
+            }
             Sensor.TYPE_MAGNETIC_FIELD -> if (mIsRendererCreated && renderer!!.isRunning && !mIsValidForTransition) {
                 if (mIsValidForSensorialRotation && sensorialRotationType == PLSensorialRotationType.PLSensorialRotationTypeAccelerometerAndMagnetometer && sensorialRotationAccelerometerData != null) {
                     if (mSensorialRotationThresholdFlag) {
