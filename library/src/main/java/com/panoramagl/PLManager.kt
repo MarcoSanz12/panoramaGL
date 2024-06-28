@@ -12,6 +12,7 @@ import android.opengl.GLSurfaceView
 import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.*
 import android.view.GestureDetector.OnDoubleTapListener
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -24,6 +25,7 @@ import com.panoramagl.downloaders.PLIFileDownloaderManager
 import com.panoramagl.enumerations.PLSensorialRotationType
 import com.panoramagl.enumerations.PLTouchEventType
 import com.panoramagl.enumerations.PLTouchStatus
+import com.panoramagl.extension.getUIDeviceOrientation
 import com.panoramagl.ios.NSTimer
 import com.panoramagl.ios.UITouch
 import com.panoramagl.ios.enumerations.UIDeviceOrientation
@@ -134,6 +136,7 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
         else
             SensorManager.SENSOR_DELAY_GAME
     }
+
 
     fun onCreate() {
         try {
@@ -969,7 +972,9 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
      * sensorial rotation methods
      */
     override fun startSensorialRotation(): Boolean {
-        if (!mIsValidForSensorialRotation) {
+        if (!mIsValidForSensorialRotation)
+        {
+            mCurrentDeviceOrientation = context.getUIDeviceOrientation()
             if (activateGyroscope()) {
                 mHasFirstGyroscopePitch = false
                 mGyroscopeLastTime = 0
@@ -1471,6 +1476,8 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
         val values = event.values
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> if (mIsRendererCreated && renderer!!.isRunning && !mIsValidForTransition) {
+                Log.i("SensorChanged", "ACCELEROMETER")
+
                 if (sensorialRotationAccelerometerData != null) {
                     sensorialRotationAccelerometerData!![0] = values[0]
                     sensorialRotationAccelerometerData!![1] = values[1]
@@ -1478,7 +1485,9 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
                 }
                 accelerometer(event, mTempAcceleration!!.setValues(values))
             }
-            Sensor.TYPE_ORIENTATION -> {
+            /*Sensor.TYPE_ORIENTATION -> {
+                Log.i("SensorChanged", "ORIENTATION")
+
                 val display = (context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)?.getDisplay(Display.DEFAULT_DISPLAY)
                 var newOrientation = mCurrentDeviceOrientation
                 when (context.resources.configuration.orientation) {
@@ -1501,8 +1510,9 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
                     )
                     mCurrentDeviceOrientation = newOrientation
                 }
-            }
+            }*/
             Sensor.TYPE_MAGNETIC_FIELD -> if (mIsRendererCreated && renderer!!.isRunning && !mIsValidForTransition) {
+                Log.i("SensorChanged", "MAGNTIC FIELD")
                 if (mIsValidForSensorialRotation && sensorialRotationType == PLSensorialRotationType.PLSensorialRotationTypeAccelerometerAndMagnetometer && sensorialRotationAccelerometerData != null) {
                     if (mSensorialRotationThresholdFlag) {
                         SensorManager.getRotationMatrix(sensorialRotationRotationMatrix, null, sensorialRotationAccelerometerData, values)
@@ -1553,12 +1563,15 @@ open class PLManager(private val context: Context) : PLIView, SensorEventListene
             }
 
             Sensor.TYPE_GYROSCOPE -> if (mIsRendererCreated && renderer!!.isRunning && !mIsValidForTransition) {
+                Log.i("SensorChanged", "GYROSCOPE")
+
                 if (mHasFirstGyroscopePitch) {
                     if (mGyroscopeLastTime != 0L) {
                         var timeDiff = (event.timestamp - mGyroscopeLastTime) * PLConstants.kGyroscopeTimeConversion
                         if (timeDiff > 1.0) timeDiff = PLConstants.kGyroscopeMinTimeStep
                         mGyroscopeRotationX += values[0] * timeDiff
                         mGyroscopeRotationY += values[1] * timeDiff
+                        Log.i("GyroscopeOrientation", "Current orientation ${mCurrentDeviceOrientation?.name} ")
                         when (mCurrentDeviceOrientation) {
                             UIDeviceOrientation.UIDeviceOrientationUnknown, UIDeviceOrientation.UIDeviceOrientationPortrait -> doGyroUpdate(
                                 mGyroscopeRotationX * PLConstants.kToDegrees,

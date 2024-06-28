@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity(), HotSpotListener {
         changePanorama(0)
         binding.button1.setOnClickListener { changePanorama(0) }
         binding.button2.setOnClickListener { changePanorama(1) }
+        plManager.startSensorialRotation()
     }
 
     override fun onResume() {
